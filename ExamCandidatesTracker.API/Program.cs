@@ -7,6 +7,8 @@ using Exam.Infrastructure.Repository;
 using ExamCandidatesTracker.API.Extensions;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -21,6 +23,26 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAuthenticationExtension(configuration);
 builder.Services.AddDbContext<ExamDbContext>(options => options.UseSqlServer(configuration.GetConnectionString
     ("DefaultConnection")));
+
+builder.Services.AddCors(policyBuilder =>
+    policyBuilder.AddDefaultPolicy(policy =>
+        policy.WithOrigins("*").AllowAnyHeader().AllowAnyHeader())
+);
+
+builder.WebHost.UseKestrel(options =>
+{
+    var httpsPort = configuration.GetValue("ASPNETCORE_HTTPS_PORT", 8080);
+    var certPassword = configuration.GetValue<string>("Kestrel:Certificates:Development:Password") ??
+        Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Certificates__Development__Password"); ;
+    var certPath = configuration.GetValue<string>("Kestrel:Certificates:Development:Path") ??
+        Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Certificates__Development__Path");
+
+    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
+    {
+        listenOptions.UseHttps(certPath!, certPassword);
+    });
+});
+
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -32,17 +54,15 @@ IronBarCode.License.LicenseKey = "IRONBARCODE.CHUKWUKAOKPALAUGO.21394-122C71D289
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseRouting();
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MigrateDatabase();
 app.Run();

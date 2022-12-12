@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Exam.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -27,6 +30,26 @@ namespace Exam.API.Extensions
                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Token")))
                  };
              });
+        }
+
+        public static WebApplication MigrateDatabase(this WebApplication webApp)
+        {
+            using (var scope = webApp.Services.CreateScope())
+            {
+                using (var appContext = scope.ServiceProvider.GetRequiredService<ExamDbContext>())
+                {
+                    try
+                    {
+                        appContext.Database.Migrate();
+                    }
+                    catch (Exception)
+                    {
+                        //Log errors or do anything you think it's needed
+                        throw;
+                    }
+                }
+            }
+            return webApp;
         }
     }
 }

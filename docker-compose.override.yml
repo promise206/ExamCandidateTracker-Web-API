@@ -1,0 +1,27 @@
+version: '3.4'
+
+services:
+  examcandidatestracker.db:
+    container_name: examcandidatestracker.db
+    environment:
+        ACCEPT_EULA: "Y"
+        MSSQL_SA_PASSWORD: "Pass@word1"
+    restart: always
+    ports:
+      - "1433:1433"
+
+  examcandidatestracker.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=443
+      - ASPNETCORE_Kestrel__Certificates__Development__Path="examcandidatestracker.pfx"
+      - ASPNETCORE_Kestrel__Certificates__Development__Password="Jhlo56$$"
+      - "ConnectionStrings:DefaultConnection=Server=examcandidatestracker.db;Database=ExamDb;User Id=sa;Password=Pass@word1"
+    ports:
+      - "80:80"
+      - "443:443"
+
+    depends_on:
+      - examcandidatestracker.db
+    

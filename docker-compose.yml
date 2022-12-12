@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  examcandidatestracker.db:
+    image: mcr.microsoft.com/mssql/server:2017-latest
+
+  examcandidatestracker.api:
+    image: examcandidatestracker.api
+    build:
+      context: .
+      dockerfile: ExamCandidatesTracker.API/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro 
