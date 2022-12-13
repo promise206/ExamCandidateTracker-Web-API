@@ -29,19 +29,6 @@ builder.Services.AddCors(policyBuilder =>
         policy.WithOrigins("*").AllowAnyHeader().AllowAnyHeader())
 );
 
-builder.WebHost.UseKestrel(options =>
-{
-    var httpsPort = configuration.GetValue("ASPNETCORE_HTTPS_PORT", 8080);
-    var certPassword = configuration.GetValue<string>("Kestrel:Certificates:Development:Password") ??
-        Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Certificates__Development__Password"); ;
-    var certPath = configuration.GetValue<string>("Kestrel:Certificates:Development:Path") ??
-        Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Certificates__Development__Path");
-
-    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
-    {
-        listenOptions.UseHttps(certPath!, certPassword);
-    });
-});
 
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
